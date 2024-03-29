@@ -14,16 +14,40 @@ import { Button } from "native-base";
 import {useTranslation} from 'react-i18next';
 import i18n from '../../pages/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import SubmitBtn from '../../components/SubmitBtn';
-
+import { authenticateFingerprint } from '../../utils/BiometricUtils';
+import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
 
 const PrivateKeyModal = ({ privateKey, label }) => {
     const [showModal, setShowModal] = useState(false);
     const { theme, switchTheme } = useContext(ThemeContext);
     const handleCopyText = () => {
         Clipboard.setString(privateKey);
+        Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'Copied.',
+            textBody: `Private Key Copied to clipboard`,            
+          });
     };
     const {t} = useTranslation();
+
+
+    async function handleSubmitfingerprint() {
+        let fingerprint = await authenticateFingerprint()
+        console.log(fingerprint)
+        if (fingerprint) {
+            Dialog.show({
+                type: ALERT_TYPE.WARNING,
+                title: 'Show Private Key',
+                textBody: `Don’t share your private key with anyone!`,
+                button: 'Continue',
+                onPressButton: async () => {  
+                  setShowModal(true)
+                  Dialog.hide()
+                },
+              });
+        }
+      }
+
   useEffect(() => {
     const loadSelectedLanguage = async () => {
       try {
@@ -37,9 +61,8 @@ const PrivateKeyModal = ({ privateKey, label }) => {
     };
     loadSelectedLanguage();
   }, []);
-  console.log(label)
     return <View>
-        <TouchableOpacity onPress={() => setShowModal(true)}>
+        <TouchableOpacity onPress={() => handleSubmitfingerprint()}>
             <View
                 style={[
                     styles.menuItemBig,
@@ -55,10 +78,9 @@ const PrivateKeyModal = ({ privateKey, label }) => {
                         }
                         style={{ width: 25, height: 25 }} 
                     />
-               <Text style={[styles.menuItemText, { color: theme.text }]}>
-                {t('show')} {label === 'mnemonic' ? t('mnemonic') : label} {label === 'mnemonic' ? '' : t('private_key')}
-                </Text>
-
+                    <Text style={[styles.menuItemText, { color: theme.text }]}>
+                    {t('show')} {label} {t('private_key')}
+                    </Text>
                 </View>
 
                 <View
@@ -76,20 +98,20 @@ const PrivateKeyModal = ({ privateKey, label }) => {
                 </View>
             </View>
         </TouchableOpacity>
-        <Modal isOpen={showModal} onClose={() => setShowModal(false)} >
-            <Modal.Content maxWidth="400px" style={{borderWidth:1,borderColor:theme.addButtonBorder}} >
+        <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+            <View style={{backgroundColor: theme.screenBackgroud}}>
+            <Modal.Content maxWidth="400px">
                 <Modal.CloseButton />
-                <Modal.Header style={{ backgroundColor: theme.menuItemBG }}><Text style={{color:theme.text, fontSize:16,textAlign:'center'}}>{t('private_key')}</Text></Modal.Header>
-                <View style={{ padding: 18, backgroundColor:theme.screenBackgroud }}>
-                    <Text style={{ color: "black", textAlign: "center", marginBottom: 10, color:theme.text }}>{privateKey}</Text>
-                    <SubmitBtn
-              title={t('copy')}
-              onPress={() => handleCopyText()}
-              containerStyle={{marginHorizontal: 40,paddingVertical:10,marginTop:10}}
-            />
+                <Modal.Header>{t('private_key')}</Modal.Header>
+                <View style={{ padding: 12  }}>
+                    <Text style={{ color: "black", textAlign: "center", marginBottom: 10 }}>{privateKey}</Text>
+                    <Button size="sm" variant="outline" onPress={() => handleCopyText()}>
+                    {t('copy')}
+                    </Button>
                 </View>
 
             </Modal.Content>
+            </View>
         </Modal>
     </View>;
 };

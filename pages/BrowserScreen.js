@@ -86,7 +86,7 @@ const BrowserScreen = ({navigation}) => {
     loadSelectedLanguage();
   }, []);
   const [url, setUrl] = useState(
-    'https://www.google.com');
+    'https://blockchain.news/');
         const [prev, setPrev] = useState(false);
         const [next, setNext] = useState(false);
         const [input, setInput] = useState('');
